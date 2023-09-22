@@ -1,0 +1,72 @@
+--SQL code testing for duplicate AIDs as a unique identifier for associates at THD
+
+With Top_of_Stack_Assoc AS 
+
+(
+  SELECT DISTINCT 
+    A.BUSINESS_UNIT
+  , A.ASSOC_ID
+  , B.ldap_id --INNERJOINEDTOBEABLETOGETLDAP_IDPLEASESEETHEBOTTOM.
+  , B.pos_bus_title
+  , B.pos_title
+  , A.FULL_NAME
+  , A.ON_LEAVE
+  , A.LOC_ID
+  , A.LOCATION_NAME
+  , A.LOC_TYPE
+  , A.GENDER
+  , A.JOB_PROFILE_ID
+  , A.JOB_PROFILE_NAME
+  , A.JOB_FAMILY
+  , A.JOB_FAMILY_GROUP
+  , A.MANAGEMENT_LEVEL
+  , A.EMPLOYMENT_CATEGORY
+  , A.ASSOCIATE_TYPE
+  , A.ASSOCIATE_SUB_TYPE
+  , A.PAY_RATE_TYPE
+  , A.SUPERVISORY_ORGANIZATION_ID
+  , A.LEVEL1
+  , A.LEVEL_1_NAME
+  , A.LEVEL2
+  , A.LEVEL_2_NAME
+  , A.LEVEL3
+  , A.LEVEL_3_NAME
+  , A.LEVEL4
+  , A.LEVEL_4_NAME
+  , A.LEVEL5
+  , A.LEVEL_5_NAME
+  , A.LEVEL6
+  , A.LEVEL_6_NAME
+  , A.LEVEL7
+  , A.LEVEL_7_NAME
+  ,A.HIRE_DATE
+  , A.TIME_IN_POSITION_DATE
+
+    FROM `analytics-hrta-thd.METRICS_ASSOCDATA.TBL_HEADCOUNT_SNAPSHOT` AS A -- PRIMARY LOCATION OF DATA ESPECIALLY WHEN TRYING TO GET ASSOCIATE ID.
+
+    INNER JOIN `analytics-hrta-thd.WORKDAY.CensusDataMax_v` AS B -- PRIMARY LOCATION OF DATA ESPECIALLY WHEN TRYING TO GET EMPLOYEE LDAP.
+
+        ON A.ASSOC_ID = B.ASSOC_ID
+
+      WHERE FW_COUNTER = (
+        
+                          SELECT 
+      
+                            MAX(FW_COUNTER) -- THIS ALLOWS US TO USE THE TABLE AGAINST ITSELF TO GET MOST RECENT DATA/FISCAL WEEK.
+      
+                          FROM `analytics-hrta-thd.METRICS_ASSOCDATA.TBL_HEADCOUNT_SNAPSHOT`)
+                      
+
+) ,
+
+result_to_verify as 
+
+( select * from Top_of_Stack_Assoc)
+
+
+
+select ldap_id,count(ldap_id) as ldap_id_count,ASSOC_ID,count(assoc_id) as AID_count from result_to_verify
+
+group by 1,3
+--HAVING COUNT(assoc_id)>1
+order by 2 desc
